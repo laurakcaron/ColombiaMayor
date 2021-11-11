@@ -205,12 +205,13 @@ relab p6980s1 retire_pension1 "What are you doing for retirement? Contribute to 
 relab p6980s2 retire_pension2 "What are you doing for retirement? Contribute to pension voluntary"
 relab p6980s3 retire_saving "Saving"
 relab p6980s4 retire_invest "Investing"
-relab p6980s5 reitre_insure "Paying insurance on your own"
+relab p6980s5 retire_insure "Paying insurance on your own"
 relab p6980s6 retire_children "Preparing your kids to take care of you"
 relab p6980s7 retire_other "Other"
 relab p6980s8 retire_none "Nothing"
 
 * Unemployed
+destring retire_pension1, replace
 replace retire_pension1 = p7420s1
 replace retire_pension2 = p7420s2
 replace retire_saving = p7420s3
@@ -252,8 +253,10 @@ gen age = 2020 - birth_year if year == 2020
 replace age = 2021 - birth_year if year == 2021
 
 * Generate individual income
+ 
 
 * Generate household income
+
 
 replace colombia_mayor = 0 if missing(colombia_mayor)
 replace retire_children = 0 if missing(retire_children)
