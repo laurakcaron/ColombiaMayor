@@ -9,7 +9,7 @@ This file cleans and merges the GEIH for 2020 and 2021 through August
 
 *****************************************************************************/
 clear 
-global main_directory "C:\Users\laura\OneDrive\Desktop\Laura's computer\Documents\My Own Documents\Research\Colombia Senior Grants" 
+global main_directory "C:\Users\laura\OneDrive\Desktop\Laura's computer\Documents\My Own Documents\Research\Colombia Senior Grants\ColombiaMayor" 
 cd "$main_directory"
 
 
@@ -247,19 +247,24 @@ relab p4030s1 service_electricity "Does this housheold have eletricity service?"
 /**********************
 Cleaning
 **********************/
-replace colombia_mayor = 0 if missing(colombia_mayor)
-replace retire_children = 0 if missing(retire_children)
-replace covid_stress = 0 if missing(covid_stress)
 encode mes, gen(month)
 gen age = 2020 - birth_year if year == 2020
 replace age = 2021 - birth_year if year == 2021
 
+* Generate individual income
+
+* Generate household income
+
+replace colombia_mayor = 0 if missing(colombia_mayor)
+replace retire_children = 0 if missing(retire_children)
+replace covid_stress = 0 if missing(covid_stress)
+
+/**********************
+Eligibility
+**********************/
+
+
+
 * Save cleaned and combined version 
 save "Clean Data/full_clean.dta", replace
 
-/*********************
-Descriptives
-*********************/
-tabstat age if colombia_mayor==1, by(mes) stat(mean min p25 p50 p75 max N)
-
-tabstat retire_children, by(colombia_mayor) stat(mean min p25 p50 p75 max N)
