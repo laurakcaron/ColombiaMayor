@@ -440,7 +440,24 @@ gen i9 = (p4030s5==1) if urban == 1
 * Generate whether multidimensional poor or not
 * Using cutoff of 3 deprivations
 egen total_deprivation = rowtotal(d_i*)
-gen multi_poor = (total_deprivation>3)
+gen multi_poor = (total_deprivation>=3)
+
+pca d_i*
+predict index
+
+* Check performance of index for predicting participation 
+reg colombia_mayor index if age > 54
+reg colombia_mayor d_i* if age > 54
+logit colombia_mayor d_i* if age > 54
+
+predict predict_treat 
+gen control = (predict_treat > 0.28) & colombia_mayor == 0
+gen treat = (colombia_mayor == 1)
+
+twoway scatter colombia_mayor age if age > 58 & (control|treat) , mcolor("pink%01") || ///
+ scatter colombia_mayor age if age <= 58 & (control|treat) , mcolor("blue%01") || ///
+ lpolyci colombia_mayor age if age < 100 & age > 58 & (control|treat) , lcolor("pink") level(95) kernel(triangle) || ///
+ lpolyci colombia_mayor age if age < 100 & age <= 58 & (control|treat) , lcolor("blue") level(95) kernel(triangle) legend(off) ytitle("Participation in Colombia Mayor") scheme(s1mono)
 	
 * Save cleaned and combined version 
 save "Clean Data/full_clean.dta", replace
