@@ -46,11 +46,29 @@ merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Resto - Otras actividades y ayudas
 merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Resto - Otros ingresos.dta", gen(_Rotri)
 merge m:1 DIRECTORIO SECUENCIA_P using "Resto - Vivienda y Hogares.dta", gen(_Rviv)
 
-//append using "╡rea - Fuerza de trabajo.dta"
-//append using "╡rea - Ocupados.dta"
+gen section = "Resto"
 
-//append using "Cabecera - Fuerza de trabajo.dta"
-//append using "Cabecera - Ocupados.dta"
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Ocupados.dta", gen(_Aocu)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Desocupados.dta", gen(_Ades)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Fuerza de trabajo.dta", gen(_Afue)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Inactivos.dta", gen(_Aina)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Otras actividades y ayudas en la semana.dta", gen(_Aotr)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Otros ingresos.dta", gen(_Aotri)
+capture merge m:1 DIRECTORIO SECUENCIA_P using "╡rea - Vivienda y Hogares.dta", gen(_Aviv)
+
+replace section = "Area" if missing(section)
+
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Ocupados.dta", gen(_Cocu)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Desocupados.dta", gen(_Cdes)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Fuerza de trabajo.dta", gen(_Cfue)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Inactivos.dta", gen(_Cina)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Otras actividades y ayudas en la semana.dta", gen(_Cotr)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Otros ingresos.dta", gen(_Cotri)
+capture merge m:1 DIRECTORIO SECUENCIA_P using "Cabecera - Vivienda y Hogares.dta", gen(_Cviv)
+
+replace section = "Cabecera" if missing(section)
+
+compress
 
 cd "$main_directory"
 save "Clean Data/`month'21_m.dta", replace
@@ -89,11 +107,29 @@ merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Resto - Otras actividades y ayudas
 merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Resto - Otros ingresos.dta", gen(_Rotri)
 merge m:1 DIRECTORIO SECUENCIA_P using "Resto - Vivienda y Hogares.dta", gen(_Rviv)
 
-//append using "╡rea - Fuerza de trabajo.dta"
-//append using "╡rea - Ocupados.dta"
+gen section = "Resto"
 
-//append using "Cabecera - Fuerza de trabajo.dta"
-//append using "Cabecera - Ocupados.dta"
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Ocupados.dta", gen(_Aocu)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Desocupados.dta", gen(_Ades)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Fuerza de trabajo.dta", gen(_Afue)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Inactivos.dta", gen(_Aina)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Otras actividades y ayudas en la semana.dta", gen(_Aotr)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Otros ingresos.dta", gen(_Aotri)
+capture merge m:1 DIRECTORIO SECUENCIA_P using "╡rea - Vivienda y Hogares.dta", gen(_Aviv)
+
+replace section = "Area" if missing(section)
+
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Ocupados.dta", gen(_Cocu)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Desocupados.dta", gen(_Cdes)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Fuerza de trabajo.dta", gen(_Cfue)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Inactivos.dta", gen(_Cina)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Otras actividades y ayudas en la semana.dta", gen(_Cotr)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Otros ingresos.dta", gen(_Cotri)
+capture merge m:1 DIRECTORIO SECUENCIA_P using "Cabecera - Vivienda y Hogares.dta", gen(_Cviv)
+
+replace section = "Cabecera" if missing(section)
+
+compress
 
 cd "$main_directory"
 save "Clean Data/`month'20_m.dta", replace
@@ -109,17 +145,26 @@ foreach month in "Agosto" "Enero" "Febrero" "Julio" "Junio" "Marzo" "Mayo" {
 }
 gen year = 2021
 
+save "Clean Data/full_2021.dta", replace
+
+clear
 foreach month in "Abril" "Agosto" "Diciembre" "Enero" "Febrero" "Julio" "Junio" "Marzo" "Mayo" "Noviembre" "Octubre" "Septiembre" {
 	append using "Clean Data/`month'20_m.dta"
 }
 
-replace year = 2020 if missing(year)
+gen year = 2020
 
-
+save "Clean Data/full_2020.dta", replace
 
 /**********************
 Variable names
 **********************/
+global drop_vars P5090S1 P6081-P6083S1 P3147S10A1 P6290S1 P6230 P6240S1 P6310S1 P6410S1 P6430S1 P6480S1 P6780S1 P6810S1 P6830S1 P6880S1 P6915S1 P6980S7A1 P7028S1 P7050S1 P7140S9A1 P7240S1 P7280S1 P7350S1 P7390S1 P7420S7A1 P7450S1 P7458S1
+
+use "Clean Data/full_2020.dta", clear
+drop $drop_vars
+append using "Clean Data/full_2021.dta"
+drop $drop_vars
 
 * Convert to lowercase
 foreach var of varlist _all {
@@ -142,12 +187,10 @@ end
 relab p6020 sex "Sex"
 relab p6030s1 birth_month "Birth month"
 relab p6030s3 birth_year "Birth year"
+relab p6040 age "Age"
 relab p6050 relationship "Relationship to head"
 relab p6080 race "Race"
 relab p6070 marital "Marital status"
-relab p6081s1 father_line "Line number of father"
-relab p6083s1 mother_line "Line number of mother"
-relab p6071s1 spouse_line "Line number of spouse"
 
 * Covid coping
 relab p3147s1 covid_infected "Infected with covid"
@@ -249,9 +292,6 @@ relab p4030s1 service_electricity "Does this housheold have eletricity service?"
 Cleaning
 **********************/
 encode mes, gen(month)
-gen age = 2020 - birth_year if year == 2020
-replace age = 2021 - birth_year if year == 2021
-
 * Generate individual income
  
 
@@ -263,11 +303,145 @@ replace retire_children = 0 if missing(retire_children)
 replace covid_stress = 0 if missing(covid_stress)
 
 /**********************
-Eligibility
+Multidimensional Poverty & Eligibility
 **********************/
+egen hhid = group(directorio secuencia_p)
+gen esc15 = esc if age >= 15
+egen max_age = max(age), by(hhid)
+egen min_age = min(age), by(hhid)
+gen only_under15 = (max_age < 15)
 
+* Number of household members over 15
+gen temp = 1
+replace temp = 0 if age < 15
+egen hh_size15 = total(temp), by(hhid)
+drop temp
 
+* 1.1 Bajo logro educativo
+* Low level of education
+egen i1 = mean(esc15), by(hhid)
+	
+gen d_i1 = (i1 < 9)
+	replace d_i1 = 1 if only_under15==1
 
+* 1.2 Analfabetismo
+* Illiteracy
+replace literate = 0 if literate ==2 
+gen literate15 = literate if age >= 15	
+egen i2 = total(literate15), by(hhid)
+	replace i2 = i2/hh_size15
+
+gen d_i2 = (i2 < 1)
+	replace d_i2 = 1 if only_under15==1
+	
+* 2.1 Inasistencia escolar
+* School inattendance
+replace student = 0 if student==2 
+gen student6_16 = student if age >= 6 & age <= 16
+
+* Number of household members 6-16
+gen temp = (age >= 6 & age <= 16)
+egen hh_size6_16 = total(temp), by(hhid)
+drop temp
+
+egen i3 = total(student6_16), by(hhid)
+	replace i3 = i3/hh_size6_16
+	
+gen d_i3 = (i3 < 1)
+	replace d_i3 = 0 if hh_size6_16 == 0
+
+* 2.2 Rezago escolar
+* Lack of school
+
+* Number of household members 7-17
+gen temp = (age >= 7 & age <= 17)
+egen hh_size7_17 = total(temp), by(hhid)
+drop temp
+gen edu_potential = age-6 if age >=7 & age <=17
+gen all_edu = (edu_potential==esc) if age >=7 & age <=17
+egen i4 = total(all_edu), by(hhid)
+	replace i4 = i4/hh_size7_17
+
+gen d_i4 = (i4 <1)
+	replace d_i4 = 0 if hh_size7_17 == 0
+
+* 2.3 Barreras de acceso a servicios para el cuidado de la primera infancia
+* Barriers to access to early childhood care services
+* We don't have the data for this one 
+
+* 2.4 Trabajo infantil
+* Child labor
+gen work12_17 = (hours > 0 & !missing(hours)) if age <= 17 & age >= 12
+	
+* Number of household members 12-17
+gen temp = (age >= 12 & age <= 17)
+egen hh_size12_17 = total(temp), by(hhid)
+drop temp	
+
+egen i5 = total(work12_17), by(hhid)
+	replace i5 = i5/hh_size12_17
+	
+gen d_i5 = (i5 < 1)	
+	replace d_i5 = 0 if hh_size12_17 == 0
+	
+* 3.1 Desempleo de large duracion
+* Long-term unemployment
+gen unemploy_12m = (p7250 > 12 & !missing(p7250))
+gen labor_force = (inlist(primary_activity, 1, 2)) | !missing(contract) | !missing(p7280)
+
+* Number of household members economically active
+egen pea = total(labor_force), by(hhid)
+
+* Check if all pensioners
+* One case of "Don't know", take to be no pension
+replace receive_pension = 0 if receive_pension == 2 | receive_pension == 9
+egen total_pensioner = total(receive_pension), by(hhid)
+gen all_pensioner = (total_pensioner==hh_size)
+	
+egen i6 = total(unemploy_12m), by(hhid)
+	replace i6 = 1 - i6/pea
+
+gen d_i6 = (i6 < 1)
+	replace d_i6 = 1 if (pea == 0 & all_pensioner == 0)
+
+* 3.2 Empleo informal 
+replace contribute_pension = 0 if contribute_pension == 2
+	replace contribute_pension = 1 if contribute_pension == 3
+	
+egen i7 = total(contribute_pension), by(hhid)
+	replace i7 = i7/pea
+	
+gen d_i7 = (i7 < 1)
+ replace d_i7 = 1 if (pea == 0 & all_pensioner == 0)
+	
+* 4.1 Sin aseguramiento en salud
+* Without health insurance
+replace ss_health = 0 if ss_health==2
+	replace ss_health = . if ss_health == 9
+	
+egen i8 = total(ss_health), by(hhid)
+	replace i8 = i8/hh_size 
+
+gen d_i8 = (i8 < 1)
+
+* 4.2 Barreras de accesso a serivcios de salud dada una necesidad
+* Don't have data for this one
+
+* 5.1 Acceso a fuente de agua mejorada
+* Access to improved water source
+
+* There are some missing urban/rural variables, don't use currently
+replace clase = CLASE if missing(clase)
+gen urban = (clase == "1")
+	replace urban = . if missing(clase)
+	replace urban = 0 if section == "Area" //check 
+gen i9 = (p4030s5==1) if urban == 1
+
+* Generate whether multidimensional poor or not
+* Using cutoff of 3 deprivations
+egen total_deprivation = rowtotal(d_i*)
+gen multi_poor = (total_deprivation>3)
+	
 * Save cleaned and combined version 
 save "Clean Data/full_clean.dta", replace
 
