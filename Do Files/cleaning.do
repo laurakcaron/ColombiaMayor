@@ -16,6 +16,7 @@ cd "$main_directory"
 **2021 
 foreach month in "Abril" "Agosto" "Enero" "Febrero" "Julio" "Junio" "Marzo" "Mayo" {
 clear
+
 cd "$main_directory/Raw Data/2021/`month'.dta"
 
 /**********************
@@ -47,11 +48,17 @@ merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Resto - Otros ingresos.dta", gen(_
 merge m:1 DIRECTORIO SECUENCIA_P using "Resto - Vivienda y Hogares.dta", gen(_Rviv)
 
 gen section = "Resto"
+capture replace CLASE = clase if !missing(clase)
+capture drop clase 
+rename *, lower
+tempfile Resto 
+save `Resto'
 
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Características generales (Personas).dta", gen(_Apers)
+clear
+capture use "╡rea - Características generales (Personas).dta"
 di _rc
 if _rc != 0 { 
-merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Caracteristicas generales (Personas).dta", gen(_Apers)  
+use "╡rea - Caracteristicas generales (Personas).dta"  
 }
 merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Ocupados.dta", gen(_Aocu)
 merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Desocupados.dta", gen(_Ades)
@@ -61,12 +68,18 @@ merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Otras actividades y ayuda
 merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Otros ingresos.dta", gen(_Aotri)
 	merge m:1 DIRECTORIO SECUENCIA_P using "╡rea - Vivienda y Hogares.dta", gen(_Aviv)
 
-replace section = "Area" if missing(section)
+gen section = "Area" 
+capture replace CLASE = clase if !missing(clase)
+capture drop clase 
+rename *, lower
+tempfile Area
+save `Area'
 
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Características generales (Personas).dta", gen(_Cpers)
+clear
+capture use "Cabecera - Características generales (Personas).dta"
 di _rc
 if _rc != 0 { 
-merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Caracteristicas generales (Personas).dta", gen(_Cpers)  
+use "Cabecera - Caracteristicas generales (Personas).dta"
 }
 merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Ocupados.dta", gen(_Cocu)
 merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Desocupados.dta", gen(_Cdes)
@@ -76,9 +89,16 @@ merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Otras actividades y ayu
 merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Otros ingresos.dta", gen(_Cotri)
 merge m:1 DIRECTORIO SECUENCIA_P using "Cabecera - Vivienda y Hogares.dta", gen(_Cviv)
 
-replace section = "Cabecera" if missing(section)
+gen section = "Cabecera" 
+capture replace CLASE = clase if !missing(clase)
+capture drop clase 
+rename *, lower
+append using `Area'
+append using `Resto'
 
 compress
+
+rename *, lower
 
 cd "$main_directory"
 save "Clean Data/`month'21_m.dta", replace
@@ -150,12 +170,19 @@ merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Resto - Otros ingresos.dta", gen(_
 merge m:1 DIRECTORIO SECUENCIA_P using "Resto - Vivienda y Hogares.dta", gen(_Rviv)
 
 gen section = "Resto"
+capture replace CLASE = clase if !missing(clase)
+capture drop clase 
+rename *, lower
 
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Características generales (Personas).dta", gen(_Apers)
+tempfile Resto
+save `Resto'
+
+clear
+capture use "╡rea - Características generales (Personas).dta"
 di _rc
 if _rc == 111 {
 rename *, lower
-merge 1:1 directorio secuencia_p orden using "╡rea - Características generales (Personas).dta", gen(_Apers)
+use "╡rea - Características generales (Personas).dta"
 global merge_var directorio secuencia_p orden
 }
 if _rc != 0 & _rc != 111 { 
@@ -176,13 +203,18 @@ if _rc == 111 {
 capture merge 1:1 directorio secuencia_p using "╡rea - Vivienda y Hogares.dta", gen(_Aviv)
 }
 
+gen section = "Area" 
+capture replace CLASE = clase if !missing(clase)
+capture drop clase 
+rename *, lower
+tempfile Area
+save `Area'
 
-replace section = "Area" if missing(section)
-
-merge 1:1 $merge_var using "Cabecera - Características generales (Personas).dta", gen(_Cpers)
+clear
+capture use "Cabecera - Características generales (Personas).dta"
 di _rc
 if _rc != 0 { 
-merge 1:1 $merge_var using "Cabecera - Caracteristicas generales (Personas).dta", gen(_Cpers)  
+use "Cabecera - Caracteristicas generales (Personas).dta"
 }
 merge 1:1 $merge_var using "Cabecera - Ocupados.dta", gen(_Cocu)
 capture merge 1:1 $merge_var using "Cabecera - Desocupados.dta", gen(_Cdes)
@@ -195,9 +227,14 @@ if _rc == 111 {
 capture merge 1:1 directorio secuencia_p using "Cabecera - Vivienda y Hogares.dta", gen(_Cviv)
 }
 
-replace section = "Cabecera" if missing(section)
+gen section = "Cabecera" 
 capture replace CLASE = clase if !missing(clase)
 capture drop clase 
+rename *, lower
+append using `Area'
+append using `Resto'
+
+
 rename *, lower
 compress
 
@@ -361,6 +398,11 @@ relab p4030s1 service_electricity "Does this housheold have eletricity service?"
 /**********************
 Cleaning
 **********************/
+egen hhid = group(directorio secuencia_p section)
+
+egen hh_size_imp = count(hhid), by(hhid)
+replace hh_size = hh_size_imp if missing(hh_size)
+
 encode mes, gen(month)
 
 replace colombia_mayor = 0 if missing(colombia_mayor)
@@ -428,11 +470,13 @@ gen hh_inc_pc = hh_inc/hh_size
 egen hh_inc_wo_cm = total(total_income_wo_cm), by(hhid)
 
 gen below_min_wage = hh_inc < 800000
+gen below_half_min_wage = hh_inc < 800000/2
+
+gen inc_elig = (below_half_min_wage == 1 & hh_size==1) | (below_min_wage == 1 & hh_size > 1)
 
 /**********************
 Multidimensional Poverty & Eligibility
 **********************/
-egen hhid = group(directorio secuencia_p)
 gen esc15 = esc if age >= 15
 egen max_age = max(age), by(hhid)
 egen min_age = min(age), by(hhid)
