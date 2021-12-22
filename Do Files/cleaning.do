@@ -48,23 +48,33 @@ merge m:1 DIRECTORIO SECUENCIA_P using "Resto - Vivienda y Hogares.dta", gen(_Rv
 
 gen section = "Resto"
 
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Ocupados.dta", gen(_Aocu)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Desocupados.dta", gen(_Ades)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Características generales (Personas).dta", gen(_Apers)
+di _rc
+if _rc != 0 { 
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Caracteristicas generales (Personas).dta", gen(_Apers)  
+}
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Ocupados.dta", gen(_Aocu)
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Desocupados.dta", gen(_Ades)
 capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Fuerza de trabajo.dta", gen(_Afue)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Inactivos.dta", gen(_Aina)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Otras actividades y ayudas en la semana.dta", gen(_Aotr)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Otros ingresos.dta", gen(_Aotri)
-capture merge m:1 DIRECTORIO SECUENCIA_P using "╡rea - Vivienda y Hogares.dta", gen(_Aviv)
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Inactivos.dta", gen(_Aina)
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Otras actividades y ayudas en la semana.dta", gen(_Aotr)
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Otros ingresos.dta", gen(_Aotri)
+	merge m:1 DIRECTORIO SECUENCIA_P using "╡rea - Vivienda y Hogares.dta", gen(_Aviv)
 
 replace section = "Area" if missing(section)
 
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Ocupados.dta", gen(_Cocu)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Desocupados.dta", gen(_Cdes)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Fuerza de trabajo.dta", gen(_Cfue)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Inactivos.dta", gen(_Cina)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Otras actividades y ayudas en la semana.dta", gen(_Cotr)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Otros ingresos.dta", gen(_Cotri)
-capture merge m:1 DIRECTORIO SECUENCIA_P using "Cabecera - Vivienda y Hogares.dta", gen(_Cviv)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Características generales (Personas).dta", gen(_Cpers)
+di _rc
+if _rc != 0 { 
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Caracteristicas generales (Personas).dta", gen(_Cpers)  
+}
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Ocupados.dta", gen(_Cocu)
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Desocupados.dta", gen(_Cdes)
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Fuerza de trabajo.dta", gen(_Cfue)
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Inactivos.dta", gen(_Cina)
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Otras actividades y ayudas en la semana.dta", gen(_Cotr)
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Otros ingresos.dta", gen(_Cotri)
+merge m:1 DIRECTORIO SECUENCIA_P using "Cabecera - Vivienda y Hogares.dta", gen(_Cviv)
 
 replace section = "Cabecera" if missing(section)
 
@@ -76,9 +86,38 @@ save "Clean Data/`month'21_m.dta", replace
 
 
 **2020
+/**********************
+Correct data file errors before merging
+**********************/
+clear
+foreach month in "Abril" "Julio" "Junio" "Marzo" "Mayo"  {
+cd "$main_directory/Raw Data/2020/`month'.dta"
+
+	foreach section in "Resto" "╡rea" "Cabecera" {
+		foreach file in "`section' - Características generales (Personas)" "`section' - Caracteristicas generales (Personas)" "`section' - Ocupados" "`section' - Desocupados" "`section' - Fuerza de trabajo" "`section' - Inactivos" "`section' - Otras actividades y ayudas en la semana" "`section' - Otros ingresos" "`section' - Vivienda y Hogares" {
+
+		capture use "`file'.dta"
+		if _rc == 0{
+
+		rename *, upper
+		rename FEX_C_2011 fex_c_2011
+		save "Fixed/`file'.dta", replace
+			
+		}
+		clear
+		}
+	}
+
+}
+
 
 foreach month in "Abril" "Agosto" "Diciembre" "Enero" "Febrero" "Julio" "Junio" "Marzo" "Mayo" "Noviembre" "Octubre" "Septiembre" {
 cd "$main_directory/Raw Data/2020/`month'.dta"
+
+if inlist("`month'", "Abril", "Julio", "Junio", "Marzo", "Mayo") {
+	cd "$main_directory/Raw Data/2020/`month'.dta/Fixed"
+
+}
 
 /**********************
 Append within-month-section
@@ -98,6 +137,9 @@ Merge sections within-month
 * Drop some duplicated observations
 cap drop if missing(CLASE)
 
+* Control case of merging variables if they vary 
+global merge_var DIRECTORIO SECUENCIA_P ORDEN
+
 * Merge with each file in turn	
 merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Resto - Ocupados.dta", gen(_Rocu)
 merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Resto - Desocupados.dta", gen(_Rdes)
@@ -109,26 +151,54 @@ merge m:1 DIRECTORIO SECUENCIA_P using "Resto - Vivienda y Hogares.dta", gen(_Rv
 
 gen section = "Resto"
 
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Ocupados.dta", gen(_Aocu)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Desocupados.dta", gen(_Ades)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Fuerza de trabajo.dta", gen(_Afue)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Inactivos.dta", gen(_Aina)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Otras actividades y ayudas en la semana.dta", gen(_Aotr)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Otros ingresos.dta", gen(_Aotri)
+capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Características generales (Personas).dta", gen(_Apers)
+di _rc
+if _rc == 111 {
+rename *, lower
+merge 1:1 directorio secuencia_p orden using "╡rea - Características generales (Personas).dta", gen(_Apers)
+global merge_var directorio secuencia_p orden
+}
+if _rc != 0 & _rc != 111 { 
+merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "╡rea - Caracteristicas generales (Personas).dta", gen(_Apers)  
+}
+merge 1:1 $merge_var using "╡rea - Ocupados.dta", gen(_Aocu)
+capture merge 1:1 $merge_var using "╡rea - Desocupados.dta", gen(_Ades)
+capture merge 1:1 $merge_var using "╡rea - Fuerza de trabajo.dta", gen(_Afue)
+if _rc != 0 & _rc != 111 { 
+capture merge 1:1 $merge_var using "╡rea- Fuerza de trabajo.dta", gen(_Afue)  
+}
+
+capture merge 1:1 $merge_var using "╡rea - Inactivos.dta", gen(_Aina)
+capture merge 1:1 $merge_var using "╡rea - Otras actividades y ayudas en la semana.dta", gen(_Aotr)
+capture merge 1:1 $merge_var using "╡rea - Otros ingresos.dta", gen(_Aotri)
 capture merge m:1 DIRECTORIO SECUENCIA_P using "╡rea - Vivienda y Hogares.dta", gen(_Aviv)
+if _rc == 111 {
+capture merge 1:1 directorio secuencia_p using "╡rea - Vivienda y Hogares.dta", gen(_Aviv)
+}
+
 
 replace section = "Area" if missing(section)
 
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Ocupados.dta", gen(_Cocu)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Desocupados.dta", gen(_Cdes)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Fuerza de trabajo.dta", gen(_Cfue)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Inactivos.dta", gen(_Cina)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Otras actividades y ayudas en la semana.dta", gen(_Cotr)
-capture merge 1:1 DIRECTORIO SECUENCIA_P ORDEN using "Cabecera - Otros ingresos.dta", gen(_Cotri)
+merge 1:1 $merge_var using "Cabecera - Características generales (Personas).dta", gen(_Cpers)
+di _rc
+if _rc != 0 { 
+merge 1:1 $merge_var using "Cabecera - Caracteristicas generales (Personas).dta", gen(_Cpers)  
+}
+merge 1:1 $merge_var using "Cabecera - Ocupados.dta", gen(_Cocu)
+capture merge 1:1 $merge_var using "Cabecera - Desocupados.dta", gen(_Cdes)
+merge 1:1 $merge_var using "Cabecera - Fuerza de trabajo.dta", gen(_Cfue)
+capture merge 1:1 $merge_var using "Cabecera - Inactivos.dta", gen(_Cina)
+capture merge 1:1 $merge_var using "Cabecera - Otras actividades y ayudas en la semana.dta", gen(_Cotr)
+capture merge 1:1 $merge_var using "Cabecera - Otros ingresos.dta", gen(_Cotri)
 capture merge m:1 DIRECTORIO SECUENCIA_P using "Cabecera - Vivienda y Hogares.dta", gen(_Cviv)
+if _rc == 111 {
+capture merge 1:1 directorio secuencia_p using "Cabecera - Vivienda y Hogares.dta", gen(_Cviv)
+}
 
 replace section = "Cabecera" if missing(section)
-
+capture replace CLASE = clase if !missing(clase)
+capture drop clase 
+rename *, lower
 compress
 
 cd "$main_directory"
@@ -159,7 +229,7 @@ save "Clean Data/full_2020.dta", replace
 /**********************
 Variable names
 **********************/
-global drop_vars P5090S1 P6081-P6083S1 P3147S10A1 P6290S1 P6230 P6240S1 P6310S1 P6410S1 P6430S1 P6480S1 P6780S1 P6810S1 P6830S1 P6880S1 P6915S1 P6980S7A1 P7028S1 P7050S1 P7140S9A1 P7240S1 P7280S1 P7350S1 P7390S1 P7420S7A1 P7450S1 P7458S1
+global drop_vars p5090s1 p6081-p6083s1 p3147s10a1 p6290s1 p6230 p6240s1 p6310s1 p6410s1 p6430s1 p6480s1 p6780s1 p6810s1 p6830s1 p6880s1 p6915s1 p6980s7a1 p7028s1 p7050s1 p7140s9a1 p7240s1 p7280s1 p7350s1 p7390s1 p7420s7a1 p7450s1 p7458s1
 
 use "Clean Data/full_2020.dta", clear
 drop $drop_vars
@@ -431,7 +501,6 @@ gen d_i8 = (i8 < 1)
 * Access to improved water source
 
 * There are some missing urban/rural variables, don't use currently
-replace clase = CLASE if missing(clase)
 gen urban = (clase == "1")
 	replace urban = . if missing(clase)
 	replace urban = 0 if section == "Area" //check 
@@ -445,19 +514,34 @@ gen multi_poor = (total_deprivation>=3)
 pca d_i*
 predict index
 
+*Generate education variables
+gen no_edu = inlist(education, 1,2)
+gen primary = inlist(education, 3)
+gen secondary = inlist(education, 4)
+gen post_secondary = inlist(education, 5, 6)
+
 * Check performance of index for predicting participation 
 reg colombia_mayor index if age > 54
 reg colombia_mayor d_i* if age > 54
-logit colombia_mayor d_i* if age > 54
+logit colombia_mayor d_i* i.marital if age > 50 & age < 70
 
 predict predict_treat 
-gen control = (predict_treat > 0.28) & colombia_mayor == 0
+sum predict_treat if colombia_mayor ==1 , det
+gen control = ((predict_treat > 0.10) & colombia_mayor == 0) & ( age >= 50 & age <= 70)
 gen treat = (colombia_mayor == 1)
 
 twoway scatter colombia_mayor age if age > 58 & (control|treat) , mcolor("pink%01") || ///
  scatter colombia_mayor age if age <= 58 & (control|treat) , mcolor("blue%01") || ///
  lpolyci colombia_mayor age if age < 100 & age > 58 & (control|treat) , lcolor("pink") level(95) kernel(triangle) || ///
  lpolyci colombia_mayor age if age < 100 & age <= 58 & (control|treat) , lcolor("blue") level(95) kernel(triangle) legend(off) ytitle("Participation in Colombia Mayor") scheme(s1mono)
+	
+
+twoway scatter colombia_mayor age if age > 58 , mcolor("pink%01") || ///
+ scatter colombia_mayor age if age <= 58 , mcolor("blue%01") || ///
+ lpolyci colombia_mayor age if age < 100 & age > 58 , lcolor("pink") level(95) kernel(triangle) || ///
+ lpolyci colombia_mayor age if age < 100 & age <= 58 , lcolor("blue") level(95) kernel(triangle) legend(off) ytitle("Participation in Colombia Mayor") scheme(s1mono)
+		
+	
 	
 * Save cleaned and combined version 
 save "Clean Data/full_clean.dta", replace
