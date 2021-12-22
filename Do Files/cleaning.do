@@ -469,10 +469,15 @@ gen hh_inc_pc = hh_inc/hh_size
 
 egen hh_inc_wo_cm = total(total_income_wo_cm), by(hhid)
 
-gen below_min_wage = hh_inc < 800000
-gen below_half_min_wage = hh_inc < 800000/2
+egen hh_labor_inc = total(labor_income), by(hhid)
+
+gen below_min_wage = hh_labor_inc < 800000
+gen below_half_min_wage = hh_labor_inc < 800000/2
 
 gen inc_elig = (below_half_min_wage == 1 & hh_size==1) | (below_min_wage == 1 & hh_size > 1)
+
+//drop inc_elig
+//gen inc_elig = (labor_income == 0 & missing(receive_pension) | receive_pension==0)
 
 /**********************
 Multidimensional Poverty & Eligibility
@@ -628,25 +633,8 @@ logit colombia_mayor d_i* i.marital if age > 50 & age < 70
 
 predict predict_treat 
 sum predict_treat if colombia_mayor ==1 , det
-gen control = ((predict_treat > 0.10) & colombia_mayor == 0) & ( age >= 50 & age <= 70)
+gen control = (inc_elig & colombia_mayor == 0 & sp_affiliated == 3)
 gen treat = (colombia_mayor == 1)
-
-twoway scatter colombia_mayor age if age > 58 & (control|treat) , mcolor("pink%01") || ///
- scatter colombia_mayor age if age <= 58 & (control|treat) , mcolor("blue%01") || ///
- lpolyci colombia_mayor age if age < 100 & age > 58 & (control|treat) , lcolor("pink") level(95) kernel(triangle) || ///
- lpolyci colombia_mayor age if age < 100 & age <= 58 & (control|treat) , lcolor("blue") level(95) kernel(triangle) legend(off) ytitle("Participation in Colombia Mayor") scheme(s1mono)
-	
-
-twoway scatter colombia_mayor age if age > 60 , mcolor("pink%01") || ///
- scatter colombia_mayor age if age <= 60 , mcolor("blue%01") || ///
- lfit colombia_mayor age if age < 100 & age > 60 , lcolor("pink") || ///
- lfit colombia_mayor age if age < 100 & age <= 60 , lcolor("blue") legend(off) ytitle("Participation in Colombia Mayor") scheme(s1mono)
-		
-twoway scatter colombia_mayor age if age > 60 & sp_affiliated ==3, mcolor("pink%01") || ///
- scatter colombia_mayor age if age <= 60 & sp_affiliated ==3, mcolor("blue%01") || ///
- lpolyci colombia_mayor age if age < 100 & age > 60 & sp_affiliated ==3, lcolor("pink") || ///
- lpolyci colombia_mayor age if age < 100 & age <= 60 & sp_affiliated ==3, lcolor("blue") legend(off) ytitle("Participation in Colombia Mayor") scheme(s1mono)
-			
 	
 * Save cleaned and combined version 
 save "Clean Data/full_clean.dta", replace
