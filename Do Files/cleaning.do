@@ -362,15 +362,72 @@ relab p4030s1 service_electricity "Does this housheold have eletricity service?"
 Cleaning
 **********************/
 encode mes, gen(month)
-* Generate individual income
- 
-
-* Generate household income
-
 
 replace colombia_mayor = 0 if missing(colombia_mayor)
 replace retire_children = 0 if missing(retire_children)
 replace covid_stress = 0 if missing(covid_stress)
+/**********************
+Income aggregate -- Individual
+**********************/
+replace p6610s1 = . if p6610s1 == 98
+replace p6620s1 = . if p6620s1 == 98
+
+replace p6750 = p6750/p6760
+
+egen labor_income = rowtotal(wages p6590s1 p6600s1 p6610s1 p6620s1 p7070)
+replace labor_income = labor_income + p6510s1 if p6510s2 == 2
+
+foreach num of numlist 1(1)4 {
+replace p6585s`num'a1 = . if p6585s`num'a1 == 98
+replace labor_income = labor_income + p6585s`num'a1 if p6585s`num'a2 == 2	
+}
+
+
+foreach num in "6545" "6580"  {
+replace p`num's1 = . if p`num's1 == 98
+replace labor_income = labor_income + p`num's1 if p`num's2== 2	
+}
+
+foreach num of numlist 1(1)4 {
+replace p6630s`num'a1 = . if p6630s`num'a1 == 98
+replace labor_income = labor_income + p6630s`num'a1 if !missing(p6630s`num'a1)
+}
+
+replace amt_pension = . if amt_pension == 98
+replace colombia_mayor_amt = . if colombia_mayor_amt == 98
+replace p7500s3a1 = . if p7500s3a1 == 98
+replace p7500s1a1 = . if p7500s1a1 == 98
+replace p7510s1a1 = . if p7510s1a1 == 98
+replace p7510s2a1 = . if p7510s2a1 == 98
+replace p7510s3a1 = . if p7510s3a1 == 98
+replace p750s2a1 = . if p750s2a1 == 98
+replace p750s3a1 = . if p750s3a1 == 98
+replace p7510s5a1 = . if p7510s5a1 == 98
+replace p7510s6a1 = . if p7510s6a1 == 98
+replace p7510s7a1 = . if p7510s7a1 == 98
+
+foreach num of numlist 1 2 {
+replace p1661s`num'a1 = . if p1661s`num'a1 == 98
+}
+
+replace p1661s4a2 = . if p1661s4a2 == 98
+
+
+egen other_income = rowtotal(p7500s1a1 amt_pension colombia_mayor_amt p7500s3a1 p7510s1a1 p7510s2a1 p7510s3a1 p750s1a1 p750s2a1 p1661s1a1 p1661s2a1 p1661s4a2 p7510s5a1 p7510s6a1 p7510s7a1)
+
+egen total_income = rowtotal(labor_income other_income)
+gen total_income_wo_cm = total_income - colombia_mayor_amt if !missing(colombia_mayor_amt)
+	replace total_income_wo_cm = total_income if missing(colombia_mayor_amt)
+	
+/**********************
+Income aggregate -- Household
+**********************/
+egen hh_inc = total(total_income), by(hhid)
+gen hh_inc_pc = hh_inc/hh_size
+
+egen hh_inc_wo_cm = total(total_income_wo_cm), by(hhid)
+
+gen below_min_wage = hh_inc < 800000
 
 /**********************
 Multidimensional Poverty & Eligibility
@@ -536,12 +593,16 @@ twoway scatter colombia_mayor age if age > 58 & (control|treat) , mcolor("pink%0
  lpolyci colombia_mayor age if age < 100 & age <= 58 & (control|treat) , lcolor("blue") level(95) kernel(triangle) legend(off) ytitle("Participation in Colombia Mayor") scheme(s1mono)
 	
 
-twoway scatter colombia_mayor age if age > 58 , mcolor("pink%01") || ///
- scatter colombia_mayor age if age <= 58 , mcolor("blue%01") || ///
- lpolyci colombia_mayor age if age < 100 & age > 58 , lcolor("pink") level(95) kernel(triangle) || ///
- lpolyci colombia_mayor age if age < 100 & age <= 58 , lcolor("blue") level(95) kernel(triangle) legend(off) ytitle("Participation in Colombia Mayor") scheme(s1mono)
+twoway scatter colombia_mayor age if age > 60 , mcolor("pink%01") || ///
+ scatter colombia_mayor age if age <= 60 , mcolor("blue%01") || ///
+ lfit colombia_mayor age if age < 100 & age > 60 , lcolor("pink") || ///
+ lfit colombia_mayor age if age < 100 & age <= 60 , lcolor("blue") legend(off) ytitle("Participation in Colombia Mayor") scheme(s1mono)
 		
-	
+twoway scatter colombia_mayor age if age > 60 & sp_affiliated ==3, mcolor("pink%01") || ///
+ scatter colombia_mayor age if age <= 60 & sp_affiliated ==3, mcolor("blue%01") || ///
+ lpolyci colombia_mayor age if age < 100 & age > 60 & sp_affiliated ==3, lcolor("pink") || ///
+ lpolyci colombia_mayor age if age < 100 & age <= 60 & sp_affiliated ==3, lcolor("blue") legend(off) ytitle("Participation in Colombia Mayor") scheme(s1mono)
+			
 	
 * Save cleaned and combined version 
 save "Clean Data/full_clean.dta", replace
